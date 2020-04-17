@@ -72,8 +72,12 @@ class NotesApp extends StatelessWidget {
     switch (path) {
       case '/note':
         {
-          // final note = (settings.arguments as Map ?? {})['note'];
-          return _buildRoute(settings, (_) => NoteEditor());
+          final note = (settings.arguments as Map ?? {})['note'];
+          return _buildRoute(
+              settings,
+              (_) => NoteEditor(
+                    note: note,
+                  ));
         }
       default:
         return null;

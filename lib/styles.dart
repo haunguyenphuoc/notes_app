@@ -21,6 +21,9 @@ const kNoteTitleColorLight = Color(0xFF202124);
 const kBottomAppBarColorLight = Color(0xF2FFFFFF);
 const kErrorColorLight = Color(0xFFD43131);
 const kNoteDetailTextColorLight = Color(0xC2000000);
+const kNoteTextColorLight = Color(0x99000000);
+const kBorderColorLight = Color(0xFFDADCE0);
+const kHintTextColorLight = Color(0xFF61656A);
 
 const _kPurplePrimaryValue = 0xFF7E39FB;
 const kAccentColorLight = MaterialColor(
@@ -39,6 +42,22 @@ const kAccentColorLight = MaterialColor(
   },
 );
 
+/// Available note background colors
+const Iterable<Color> kNoteColors = [
+  Colors.white,
+  Color(0xFFF28C82),
+  Color(0xFFFABD03),
+  Color(0xFFFFF476),
+  Color(0xFFCDFF90),
+  Color(0xFFA7FEEB),
+  Color(0xFFCBF0F8),
+  Color(0xFFAFCBFA),
+  Color(0xFFD7AEFC),
+  Color(0xFFFDCFE9),
+  Color(0xFFE6C9A9),
+  Color(0xFFE9EAEE),
+];
+
 /// [TextStyle] for text notes in detail view
 const kNoteTextLargeLight = TextStyle(
   color: kNoteDetailTextColorLight,
@@ -46,10 +65,25 @@ const kNoteTextLargeLight = TextStyle(
   height: 1.3125,
 );
 
+/// [TextStyle] for text notes
+const kNoteTextLight = TextStyle(
+  color: kNoteTextColorLight,
+  fontSize: 16,
+  height: 1.3125,
+);
+
 /// [TextStyle] for note title in a preview card
 const kNoteTitleLight = TextStyle(
   color: kNoteTitleColorLight,
   fontSize: 21,
+  height: 19 / 16,
+  fontWeight: FontWeights.medium,
+);
+
+/// [TextStyle] for note title in a preview card
+const kCardTitleLight = TextStyle(
+  color: kNoteTitleColorLight,
+  fontSize: 16,
   height: 19 / 16,
   fontWeight: FontWeights.medium,
 );

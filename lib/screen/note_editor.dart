@@ -7,18 +7,37 @@ import 'package:provider/provider.dart';
 import 'package:note_app/service/notes_service.dart';
 
 class NoteEditor extends StatefulWidget {
+  ///Create a [NoteEditor]
+  /// provides an existed [noted] in edit mode, or `null` to create a new one
+  const NoteEditor({Key key, this.note}) : super(key: key);
+  final Note note;
+
   @override
-  _NoteEditorState createState() => _NoteEditorState();
+  _NoteEditorState createState() => _NoteEditorState(note);
 }
 
 class _NoteEditorState extends State<NoteEditor> {
-  /// The note in editing
-  final Note _note = Note();
+  /// Create a state for [NoteEditor], with an optional [note] being edted
+  /// otherwise a new one be created
+  _NoteEditorState(Note note)
+      : this._note = note ?? Note(),
+        this._originNote = note?.copy() ?? Note(),
+        this._titleTextController = TextEditingController(text: note?.title),
+        this._contentTextController =
+            TextEditingController(text: note?.content);
 
-  final TextEditingController _titleTextController =
-      TextEditingController(text: '');
-  final TextEditingController _contentTextController =
-      TextEditingController(text: '');
+  /// The note in editing
+  final Note _note;
+
+  /// The origin copy before editing
+  final Note _originNote;
+  final TextEditingController _titleTextController;
+  final TextEditingController _contentTextController;
+
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  /// If the note is modified
+  bool get _isDirty => _note != _originNote;
 
   @override
   void initState() {
@@ -26,7 +45,7 @@ class _NoteEditorState extends State<NoteEditor> {
     _titleTextController
         .addListener(() => {_note.title = _titleTextController.text});
     _contentTextController
-        .addListener(() => {_note.content = _titleTextController.text});
+        .addListener(() => {_note.content = _contentTextController.text});
   }
 
   @override
@@ -41,6 +60,7 @@ class _NoteEditorState extends State<NoteEditor> {
     final uid = Provider.of<CurrentUser>(context).data.uid;
     debugPrint('uid: $uid');
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         actions: _buildTopActions(context, uid),
       ),
@@ -106,8 +126,7 @@ class _NoteEditorState extends State<NoteEditor> {
 
   Future<bool> _onPop(String uid) {
     debugPrint('_onPop');
-    if ((_note.id != null || _note.isNotEmpty)) {
-      debugPrint('saveToFireStore + uid: $uid');
+    if (_isDirty && (_note.id != null || _note.isNotEmpty)) {
       _note
         ..modifiedAt = DateTime.now()
         ..saveToFireStore(uid);
