@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:note_app/icons.dart';
 import 'package:note_app/model/filter.dart';
@@ -43,6 +44,15 @@ class AppDrawer extends StatelessWidget {
                 },
               ),
               const Divider(),
+              DrawerFilterItem(
+                icon: AppIcons.delete_outline,
+                title: 'Log out',
+                isChecked: false,
+                onTap: () {
+                  //Navigator.pop(context);
+                  _signOut(context);
+                },
+              ),
             ],
           ),
         ),
@@ -73,4 +83,28 @@ class AppDrawer extends StatelessWidget {
           ),
         ),
       );
+
+  void _signOut(BuildContext context) async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: const Text('Are you sure to sign out the current account?'),
+        actions: <Widget>[
+          FlatButton(
+            child: const Text('No'),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          FlatButton(
+            child: const Text('Yes'),
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      ),
+    );
+
+    if (yes) {
+      FirebaseAuth.instance.signOut();
+      Navigator.pop(context);
+    }
+  }
 }
