@@ -17,6 +17,8 @@ class FontWeights {
 
 const kBottomBarSize = 56.0;
 const kIconTintLight = Color(0xFF5F6368);
+const kIconTintCheckedLight = Color(0xFF202124);
+const kLabelColorLight = Color(0xFF202124);
 const kNoteTitleColorLight = Color(0xFF202124);
 const kBottomAppBarColorLight = Color(0xF2FFFFFF);
 const kErrorColorLight = Color(0xFFD43131);
@@ -24,6 +26,7 @@ const kNoteDetailTextColorLight = Color(0xC2000000);
 const kNoteTextColorLight = Color(0x99000000);
 const kBorderColorLight = Color(0xFFDADCE0);
 const kColorPickerBorderColor = Color(0x21000000);
+const kCheckedLabelBackgroudLight = Color(0x337E39FB);
 const kHintTextColorLight = Color(0xFF61656A);
 
 const _kPurplePrimaryValue = 0xFF7E39FB;

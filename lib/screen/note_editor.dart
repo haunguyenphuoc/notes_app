@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,6 +42,7 @@ class _NoteEditorState extends State<NoteEditor> with CommandHandler {
   final TextEditingController _contentTextController;
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  StreamSubscription<Note> _noteSubscription;
 
   /// If the note is modified
   bool get _isDirty => _note != _originNote;
@@ -55,14 +58,16 @@ class _NoteEditorState extends State<NoteEditor> with CommandHandler {
 
   @override
   void dispose() {
-    _titleTextController.dispose();
-    _contentTextController.dispose();
+    _noteSubscription?.cancel();
+    _titleTextController?.dispose();
+    _contentTextController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final uid = Provider.of<CurrentUser>(context).data.uid;
+    _watchNoteDocument(uid);
     debugPrint('uid: $uid');
 
     return ChangeNotifierProvider.value(
@@ -121,9 +126,7 @@ class _NoteEditorState extends State<NoteEditor> with CommandHandler {
             ),
             tooltip: _note.pinned == true ? 'Unpin' : 'Pin',
             onPressed: () => _updateStateNote(
-              uid,
-              _note.pinned ? NoteState.unspecified : NoteState.pinned,
-            ),
+                uid, _note.pinned ? NoteState.unspecified : NoteState.pinned),
           ),
         if (_note.id != null && _note.state < NoteState.archived)
           IconButton(
@@ -175,6 +178,7 @@ class _NoteEditorState extends State<NoteEditor> with CommandHandler {
             maxLength: 1024,
             maxLines: null,
             textCapitalization: TextCapitalization.sentences,
+            readOnly: !_note.state.canEdit,
           ),
           const SizedBox(
             height: 14,
@@ -187,6 +191,7 @@ class _NoteEditorState extends State<NoteEditor> with CommandHandler {
             ),
             maxLines: null,
             textCapitalization: TextCapitalization.sentences,
+            readOnly: !_note.state.canEdit,
           ),
         ],
       );
@@ -253,6 +258,41 @@ class _NoteEditorState extends State<NoteEditor> with CommandHandler {
         ..saveToFireStore(uid);
     }
     return Future.value(true);
+  }
+
+  void _watchNoteDocument(String uid) {
+    if (_noteSubscription == null && uid != null && _note.id != null) {
+      _noteSubscription = noteDocument(_note.id, uid)
+          .snapshots()
+          .map((snapshot) => snapshot.exists ? snapshot.toNote() : null)
+          .listen(_onCloudNoteUpdated);
+    }
+  }
+
+  void _onCloudNoteUpdated(Note note) {
+    if (!mounted || note?.isNotEmpty != true || _note == note) {
+      return;
+    }
+
+    final refresh = () {
+      _titleTextController.text = _note.title ?? '';
+      _contentTextController.text = _note.content ?? '';
+      _originNote.update(note, updateTimestamp: false);
+      _note.update(note, updateTimestamp: false);
+    };
+
+    if (_isDirty) {
+      _scaffoldKey.currentState?.showSnackBar(SnackBar(
+        content: const Text('The note is updated on cloud.'),
+        action: SnackBarAction(
+          label: 'Refresh',
+          onPressed: refresh,
+        ),
+        duration: const Duration(days: 1),
+      ));
+    } else {
+      refresh();
+    }
   }
 
   void _updateStateNote(String uid, NoteState state) {

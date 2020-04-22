@@ -6,9 +6,11 @@ import 'package:note_app/model/note.dart';
 import 'package:note_app/model/user.dart';
 import 'package:note_app/service/notes_service.dart';
 import 'package:note_app/styles.dart';
+import 'package:note_app/widget/drawer.dart';
 import 'package:note_app/widget/note_grid.dart';
 import 'package:note_app/widget/note_list.dart';
 import 'package:provider/provider.dart';
+import 'package:tuple/tuple.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -40,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> with CommandHandler {
           child: Consumer2<NoteFilter, List<Note>>(
             builder: (context, filter, notes, child) {
               final hasNotes = notes?.isNotEmpty == true;
+              final canCreate = filter.noteState.canCreate;
               return Scaffold(
                 key: _scaffoldKey,
                 body: Center(
@@ -61,8 +64,9 @@ class _HomeScreenState extends State<HomeScreen> with CommandHandler {
                     ),
                   ),
                 ),
-                floatingActionButton: _fab(context),
-                bottomNavigationBar: _bottomActions(),
+                drawer: AppDrawer(),
+                floatingActionButton: canCreate ? _fab(context) : null,
+                bottomNavigationBar: canCreate ? _bottomActions() : null,
                 floatingActionButtonLocation:
                     FloatingActionButtonLocation.endDocked,
                 extendBody: true,
@@ -81,7 +85,14 @@ class _HomeScreenState extends State<HomeScreen> with CommandHandler {
       );
 
   Widget _appBar(BuildContext context) => SliverAppBar(
+        floating: true,
+        snap: true,
         title: _topActions(context),
+        automaticallyImplyLeading: false,
+        centerTitle: true,
+        titleSpacing: 0,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       );
 
   Widget _topActions(context) => Container(
@@ -159,9 +170,40 @@ class _HomeScreenState extends State<HomeScreen> with CommandHandler {
       return [_buildBlankView(filter.noteState)];
     }
     final factory = _girdView ? NotesGrid.create : NoteList.create;
+    final showPinned = filter.noteState == NoteState.unspecified;
 
+    if (!showPinned) {
+      return [
+        factory(notes: notes, onTap: _onNoteTap),
+      ];
+    }
+
+    final partition = _partitionNotes(notes);
+    final hasPined = partition.item1.isNotEmpty;
+    final hasUnPined = partition.item2.isNotEmpty;
+
+    final _buildLabel = (String label, [double top = 26]) => SliverToBoxAdapter(
+          child: Container(
+            padding: EdgeInsetsDirectional.only(
+              top: top,
+              bottom: 25,
+              start: 26,
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: kHintTextColorLight,
+                fontWeight: FontWeights.medium,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        );
     return [
-      factory(notes: notes, onTap: _onNoteTap),
+      if (hasPined) _buildLabel('PINNED'),
+      if (hasPined) factory(notes: partition.item1, onTap: _onNoteTap),
+      if (hasUnPined && hasPined) _buildLabel('OTHERS'),
+      factory(notes: partition.item2, onTap: _onNoteTap),
     ];
   }
 
@@ -214,5 +256,15 @@ class _HomeScreenState extends State<HomeScreen> with CommandHandler {
         .snapshots()
         .handleError((e) => debugPrint('query notes failed: $e'))
         .map((snapshot) => Note.fromQuery(snapshot));
+  }
+
+  Tuple2<List<Note>, List<Note>> _partitionNotes(List<Note> notes) {
+    if (notes?.isNotEmpty != true) {
+      return Tuple2([], []);
+    }
+    final indexUnpined = notes?.indexWhere((n) => !n.pinned);
+    return indexUnpined > -1
+        ? Tuple2(notes.sublist(0, indexUnpined), notes.sublist(indexUnpined))
+        : Tuple2(notes, []);
   }
 }
