@@ -12,7 +12,14 @@ enum NoteState {
 }
 
 /// Add properties/methods to [NoteState]
-extension MoteStateX on NoteState {
+extension NoteStateX on NoteState {
+  bool get canCreate => this <= NoteState.pinned;
+  bool get canEdit => this < NoteState.deleted;
+
+  bool operator <(NoteState other) => (this?.index ?? 0) < (other?.index ?? 0);
+  bool operator <=(NoteState other) =>
+      (this?.index ?? 0) <= (other?.index ?? 0);
+
   String get emptyResultMessage {
     switch (this) {
       case NoteState.archived:
@@ -79,6 +86,22 @@ class Note extends ChangeNotifier {
       modifiedAt = other.modifiedAt;
     }
     notifyListeners();
+  }
+
+  Note updateWith({
+    String title,
+    String content,
+    Color color,
+    NoteState state,
+    bool updateTimestamp = true,
+  }) {
+    if (title != null) this.title = title;
+    if (content != null) this.content = content;
+    if (color != null) this.color = color;
+    if (state != null) this.state = state;
+    if (updateTimestamp) modifiedAt = DateTime.now();
+    notifyListeners();
+    return this;
   }
 
   /// Serializes this note into a JSON object

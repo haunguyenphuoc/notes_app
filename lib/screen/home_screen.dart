@@ -7,6 +7,7 @@ import 'package:note_app/model/user.dart';
 import 'package:note_app/service/notes_service.dart';
 import 'package:note_app/styles.dart';
 import 'package:note_app/widget/note_grid.dart';
+import 'package:note_app/widget/note_list.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,8 +15,9 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with CommandHandler {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _girdView = true;
 
   @override
   Widget build(BuildContext context) => AnnotatedRegion<SystemUiOverlayStyle>(
@@ -45,11 +47,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     constraints: const BoxConstraints.tightFor(width: 720),
                     child: CustomScrollView(
                       slivers: <Widget>[
+                        _appBar(context),
                         if (hasNotes)
                           const SliverToBoxAdapter(
                             child: SizedBox(height: 24),
                           ),
                         ..._buildNotesView(context, filter, notes),
+                        if (hasNotes)
+                          SliverToBoxAdapter(
+                            child: SizedBox(height: kBottomBarSize + 10),
+                          )
                       ],
                     ),
                   ),
@@ -73,11 +80,64 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       );
 
+  Widget _appBar(BuildContext context) => SliverAppBar(
+        title: _topActions(context),
+      );
+
+  Widget _topActions(context) => Container(
+        //constraints: BoxConstraints(maxWidth: 720),
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        child: Card(
+          elevation: 2,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 7),
+            child: Row(
+              children: <Widget>[
+                const SizedBox(width: 20),
+                InkWell(
+                  child: const Icon(Icons.menu),
+                  onTap: () => _scaffoldKey.currentState?.openDrawer(),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Text(
+                    'Search your notes',
+                    style: TextStyle(fontSize: 16, color: kHintTextColorLight),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                InkWell(
+                  child:
+                      Icon(_girdView ? AppIcons.view_list : AppIcons.view_grid),
+                  onTap: () {
+                    setState(() {
+                      _girdView = !_girdView;
+                    });
+                  },
+                ),
+                const SizedBox(width: 18),
+                _buildAvatar(context),
+                const SizedBox(width: 10),
+              ],
+            ),
+          ),
+        ),
+      );
+
+  Widget _buildAvatar(BuildContext context) {
+    final url = Provider.of<CurrentUser>(context)?.data?.photoUrl;
+    return CircleAvatar(
+      backgroundImage: url != null ? NetworkImage(url) : null,
+      child: url == null ? const Icon(Icons.face) : null,
+      radius: 17,
+    );
+  }
+
   Widget _bottomActions() => BottomAppBar(
         shape: const CircularNotchedRectangle(),
         child: Container(
           height: kBottomBarSize,
-          //padding: const EdgeInsets.symmetric(),
+          padding: const EdgeInsets.symmetric(horizontal: 10.0),
           child: Row(
             children: <Widget>[
               const Icon(AppIcons.checkbox, size: 26, color: kIconTintLight),
@@ -98,13 +158,15 @@ class _HomeScreenState extends State<HomeScreen> {
     if (notes?.isNotEmpty != true) {
       return [_buildBlankView(filter.noteState)];
     }
+    final factory = _girdView ? NotesGrid.create : NoteList.create;
+
     return [
-      NotesGrid.create(notes: notes, onTap: _onNoteTap),
+      factory(notes: notes, onTap: _onNoteTap),
     ];
   }
 
   Widget _buildBlankView(NoteState filteredState) => SliverFillRemaining(
-        hasScrollBody: false,
+        //hasScrollBody: false,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           mainAxisSize: MainAxisSize.min,
@@ -132,7 +194,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onNoteTap(Note note) async {
     final command =
         await Navigator.pushNamed(context, '/note', arguments: {'note': note});
-    debugPrint('_onNoteTap : $command');
+    //debugPrint('_onNoteTap : ${command.message}');
+    processNoteCommand(_scaffoldKey.currentState, command);
   }
 
   /// Create note query

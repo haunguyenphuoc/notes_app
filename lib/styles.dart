@@ -23,6 +23,7 @@ const kErrorColorLight = Color(0xFFD43131);
 const kNoteDetailTextColorLight = Color(0xC2000000);
 const kNoteTextColorLight = Color(0x99000000);
 const kBorderColorLight = Color(0xFFDADCE0);
+const kColorPickerBorderColor = Color(0x21000000);
 const kHintTextColorLight = Color(0xFF61656A);
 
 const _kPurplePrimaryValue = 0xFF7E39FB;
@@ -57,6 +58,7 @@ const Iterable<Color> kNoteColors = [
   Color(0xFFE6C9A9),
   Color(0xFFE9EAEE),
 ];
+final kDefaultNoteColor = kNoteColors.first;
 
 /// [TextStyle] for text notes in detail view
 const kNoteTextLargeLight = TextStyle(
