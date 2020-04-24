@@ -12,7 +12,7 @@ Screenshots:
  - Pined and Archived note.
  - Custom color for note
 # Pattern
- - Command pattern
+ Command pattern
   
 
 #Reference
